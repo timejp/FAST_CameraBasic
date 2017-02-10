@@ -13,8 +13,9 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+import com.bumptech.glide.Glide;
 
+public class MainActivity extends AppCompatActivity {
     private final int REQ_PERMISSION = 100; // 권한요청코드
     private final int REQ_CAMERA = 101; // 카메라 요청코드
 
@@ -28,18 +29,28 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // 1. 위젯 세팅
+        // 1. 위젯을 세팅
         setWidget();
-        // 2. 버튼관련 컨트롤러 비활성화 처리
+        // 2. 버튼관련 컨트롤러 활성화처리
         buttonDisable();
         // 3. 리스너 계열을 등록
         setListener();
-        // 4. 권한 처
+        // 4. 권한처리
         checkPermission();
     }
 
+    // 버튼 비활성화하기
+    private void buttonDisable() {
+        btnCamera.setEnabled(false);
+    }
+
+    // 버튼 활성화하기
+    private void buttonEnable() {
+        btnCamera.setEnabled(true);
+    }
+
     private void init() {
-        // 프로그램 실행
+        // 권한처리가 통과 되었을때만 버튼을 활성화 시켜준다
         buttonEnable();
     }
 
@@ -63,16 +74,6 @@ public class MainActivity extends AppCompatActivity {
     // 리스너 세팅
     private void setListener() {
         btnCamera.setOnClickListener(clickListener);
-    }
-
-    // 카메라 버튼 비활성화
-    private void buttonDisable() {
-        btnCamera.setEnabled(false);
-    }
-
-    // 카메라 버튼 활성화
-    private void buttonEnable() {
-        btnCamera.setEnabled(true);
     }
 
     // 리스너 정의
@@ -104,16 +105,27 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQ_CAMERA) {
+
+        if (requestCode == REQ_CAMERA && resultCode == RESULT_OK) { // 사진 확인처리됨 RESULT_OK = -1
             // 롤리팝 체크
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
                 fileUri = data.getData();
             }
             if (fileUri != null) {
-                imageView.setImageURI(fileUri);
+                // 글라이드로 이미지 세팅하면 자동으로 사이즈 조절
+                Glide.with(this)
+                        .load(fileUri)
+                        .into(imageView);
             } else {
                 Toast.makeText(this, "사진파일이 없습니다", Toast.LENGTH_LONG).show();
             }
+        } else {
+            // resultCode 가 0이고 사진이 찍혔으면 uri 가 남는데
+            // uri 가 있을 경우 삭제처리...
+            fileUri = null;
+            Glide.with(this)
+                    .load(R.mipmap.ic_launcher)
+                    .into(imageView);
         }
     }
 
@@ -125,7 +137,6 @@ public class MainActivity extends AppCompatActivity {
                 init();
             } else {
                 Toast.makeText(this, "권한을 허용하지 않으시면 프로그램을 실행할 수 없습니다.", Toast.LENGTH_LONG).show();
-                finish();
             }
         }
     }

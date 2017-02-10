@@ -1,6 +1,8 @@
 package com.timejh.camerabasic;
 
+import android.content.ContentValues;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -18,6 +20,8 @@ public class MainActivity extends AppCompatActivity {
 
     private Button btnCamera;
     private ImageView imageView;
+
+    private Uri fileUri = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,11 +83,39 @@ public class MainActivity extends AppCompatActivity {
             switch (v.getId()) {
                 case R.id.btnCamera: //카메라 버튼 동작
                     intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+                    // 롤리팝 이상 버전에서는 아래 코드를 반영해야 한다.
+                    // --- 카메라 촬영 후 미디어 컨텐트 uri 를 생성해서 외부저장소에 저장한다 ---
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        ContentValues values = new ContentValues(1);
+                        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpg");
+                        fileUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                        intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    }
+                    // --- 여기 까지 컨텐트 uri 강제세팅 ---
+
                     startActivityForResult(intent, REQ_CAMERA);
                     break;
             }
         }
     };
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_CAMERA) {
+            // 롤리팝 체크
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                fileUri = data.getData();
+            }
+            if (fileUri != null) {
+                imageView.setImageURI(fileUri);
+            } else {
+                Toast.makeText(this, "사진파일이 없습니다", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {

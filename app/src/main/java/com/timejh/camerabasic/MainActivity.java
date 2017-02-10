@@ -1,6 +1,8 @@
 package com.timejh.camerabasic;
 
+import android.content.Intent;
 import android.os.Build;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -22,13 +24,19 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // 1. 위젯 세팅
         setWidget();
+        // 2. 버튼관련 컨트롤러 비활성화 처리
+        buttonDisable();
+        // 3. 리스너 계열을 등록
         setListener();
+        // 4. 권한 처
         checkPermission();
     }
 
     private void init() {
         // 프로그램 실행
+        buttonEnable();
     }
 
     // 권한관리
@@ -53,13 +61,25 @@ public class MainActivity extends AppCompatActivity {
         btnCamera.setOnClickListener(clickListener);
     }
 
+    // 카메라 버튼 비활성화
+    private void buttonDisable() {
+        btnCamera.setEnabled(false);
+    }
+
+    // 카메라 버튼 활성화
+    private void buttonEnable() {
+        btnCamera.setEnabled(true);
+    }
+
     // 리스너 정의
     private View.OnClickListener clickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
+            Intent intent = null;
             switch (v.getId()) {
                 case R.id.btnCamera: //카메라 버튼 동작
-
+                    intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    startActivityForResult(intent, REQ_CAMERA);
                     break;
             }
         }
